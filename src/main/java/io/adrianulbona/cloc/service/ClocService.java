@@ -1,10 +1,7 @@
 package io.adrianulbona.cloc.service;
 
-import ch.hsr.geohash.GeoHash;
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import io.github.adrianulbona.cloc.CountryLocator;
-import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -12,7 +9,6 @@ import spark.Response;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static ch.hsr.geohash.GeoHash.withCharacterPrecision;
 import static java.lang.String.format;
@@ -26,7 +22,6 @@ public class ClocService {
 
 	private final static Logger LOGGER = LoggerFactory.getLogger(ClocService.class);
 
-	private final Gson gson;
 	private final CountryLocator countryLocator;
 
 	public static void main(String[] args) throws IOException {
@@ -35,48 +30,35 @@ public class ClocService {
 
 	public ClocService() throws IOException {
 		LOGGER.info("Initializing Service...");
-		this.gson = new Gson();
 		this.countryLocator = CountryLocator.fromFreshIndex();
 		LOGGER.info("Loaded Country Locator...");
 
-		get("/locate", this::locate, this.gson::toJson);
-		get("/locate/:lat/:long", this::locateLatLong, this.gson::toJson);
-		exception(JsonSyntaxException.class, (e, req, res) -> halt(SC_BAD_REQUEST, req.body()));
+		final Gson gson = new Gson();
+		get("/locate/:lat/:long", this::locateLatLong, gson::toJson);
+		get("/locate/:geohash", this::locateGeoHash, gson::toJson);
+
+		exception(NumberFormatException.class, (e, req, res) -> halt(SC_BAD_REQUEST));
+		exception(IllegalArgumentException.class, (e, req, res) -> halt(SC_BAD_REQUEST));
+
 		LOGGER.info("Created Routes...");
 	}
 
-	private List<Location> locate(Request req, Response res) {
-		final Coordinate coordinate = this.gson.fromJson(req.body(), Coordinate.class);
-		return locate(coordinate);
+	private List<String> locateGeoHash(Request req, Response res) {
+		final String geohash = req.params("geohash");
+		return locate(geohash);
 	}
 
-	private List<Location> locateLatLong(Request req, Response res) {
+	private List<String> locateLatLong(Request req, Response res) {
 		final Double latitude = Double.valueOf(req.params("lat"));
 		final Double longitude = Double.valueOf(req.params("long"));
-		return locate(new Coordinate(latitude, longitude));
+		final String geohash = withCharacterPrecision(latitude, longitude, 6).toBase32();
+		return locate(geohash);
 	}
 
-	private List<Location> locate(Coordinate coordinate) {
-		LOGGER.info(format("Searching locations for: %s", coordinate));
-		final GeoHash geoHash = withCharacterPrecision(coordinate.getLat(), coordinate.getLon(), 6);
-		final List<String> locations = this.countryLocator.locate(geoHash.toBase32());
-		LOGGER.info(format("Found %d locations", locations.size()));
-		return locations
-				.stream()
-				.map(Location::new)
-				.collect(Collectors.toList());
-	}
-
-	@Data
-	public static class Coordinate {
-
-		private final double lat;
-		private final double lon;
-	}
-
-	@Data
-	public static class Location {
-
-		private final String countryCode;
+	private List<String> locate(String geohash) {
+		LOGGER.info(format("Searching locations for: %s", geohash));
+		final List<String> locations = this.countryLocator.locate(geohash);
+		LOGGER.info(format("Found: %s", locations));
+		return locations;
 	}
 }
