@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.List;
 
 import static ch.hsr.geohash.GeoHash.withCharacterPrecision;
+import static io.github.adrianulbona.cloc.CountryLocator.fromFreshIndex;
 import static java.lang.String.format;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static spark.Spark.*;
@@ -30,15 +31,15 @@ public class ClocService {
 
 	public ClocService() throws IOException {
 		LOGGER.info("Initializing Service...");
-		this.countryLocator = CountryLocator.fromFreshIndex();
+		this.countryLocator = fromFreshIndex();
 		LOGGER.info("Loaded Country Locator...");
 
 		final Gson gson = new Gson();
 		get("/locate/:lat/:long", this::locateLatLong, gson::toJson);
 		get("/locate/:geohash", this::locateGeoHash, gson::toJson);
 
-		exception(NumberFormatException.class, (e, req, res) -> halt(SC_BAD_REQUEST));
-		exception(IllegalArgumentException.class, (e, req, res) -> halt(SC_BAD_REQUEST));
+		exception(NumberFormatException.class, (e, req, res) -> halt(SC_BAD_REQUEST, e.getMessage()));
+		exception(IllegalArgumentException.class, (e, req, res) -> halt(SC_BAD_REQUEST, e.getMessage()));
 
 		LOGGER.info("Created Routes...");
 	}
