@@ -10,6 +10,7 @@
 
     <properties>
         <encoding>UTF-8</encoding>
+        <shaded.jar.name>app</shaded.jar.name>
     </properties>
 
     <dependencies>
@@ -67,6 +68,7 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
+                            <finalName>${shaded.jar.name}</finalName>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>io.adrianulbona.cloc.service.ClocService</mainClass>
