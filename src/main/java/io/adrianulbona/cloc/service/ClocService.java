@@ -52,7 +52,7 @@ public class ClocService {
 	private List<String> locateLatLong(Request req, Response res) {
 		final Double latitude = Double.valueOf(req.params("lat"));
 		final Double longitude = Double.valueOf(req.params("long"));
-		final String geohash = withCharacterPrecision(latitude, longitude, 6).toBase32();
+		final String geohash = withCharacterPrecision(latitude, longitude, 5).toBase32();
 		return locate(geohash);
 	}
 

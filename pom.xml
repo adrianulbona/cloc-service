@@ -6,6 +6,7 @@
 
     <groupId>io.adrianulbona</groupId>
     <artifactId>cloc-service</artifactId>
+    <name>Country Locator Service</name>
     <version>0.1.0</version>
 
     <properties>
@@ -17,7 +18,7 @@
         <dependency>
             <groupId>io.github.adrianulbona</groupId>
             <artifactId>cloc</artifactId>
-            <version>0.1.0</version>
+            <version>0.2.0</version>
         </dependency>
         <dependency>
             <groupId>ch.hsr</groupId>
